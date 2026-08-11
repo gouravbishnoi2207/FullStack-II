@@ -17,7 +17,7 @@ function ValidationMessage({ post, platforms, limits }) {
             </p>
           ) : (
             <p className="error">
-              ❌ {platform}: Limit exceeded by {post.length - limits[platform]} characters
+               {platform}: Limit exceeded by {post.length - limits[platform]} characters
             </p>
           )}
         </div>
