@@ -1,5 +1,6 @@
 import "./App.css";
-import { useState,useEffect} from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import PlatformSelector from "./components/PlatformSelector";
 import PostInput from "./components/PostInput";
@@ -7,178 +8,184 @@ import CharacterCounter from "./components/CharacterCounter";
 import ValidationMessage from "./components/ValidationMessage";
 import ImageUploader from "./components/ImageUploader";
 import DraftList from "./components/DraftList";
+import LoginForm from "./components/LoginForm";
+import RoleDashboard from "./components/RoleDashboard";
+import CalendarScheduler from "./components/CalendarScheduler";
+import {
+  deleteDraft,
+  loadDraftsFromLocalStorage,
+  saveDraft,
+  setImage,
+  setLoading,
+  setMessage,
+  startEditingDraft,
+  togglePlatform,
+  updatePost,
+} from "./features/composer/composerSlice";
+import {
+  selectDrafts,
+  selectPlatforms,
+  selectPost,
+} from "./features/composer/selectors";
+import { canAccessRoute, hasPermission } from "./features/auth/rbac";
 
 function App() {
-  const [post, setPost] = useState("");
-  const [platforms, setPlatforms] = useState([]);
- const [image, setImage] = useState(null);
-const [drafts, setDrafts] = useState(() => {
-  const savedDrafts = localStorage.getItem("drafts");
+  const dispatch = useDispatch();
+  const post = useSelector(selectPost);
+  const platforms = useSelector(selectPlatforms);
+  const image = useSelector((state) => state.composer.image);
+  const drafts = useSelector(selectDrafts);
+  const editingDraftId = useSelector((state) => state.composer.editingDraftId);
+  const message = useSelector((state) => state.composer.message);
+  const loading = useSelector((state) => state.composer.loading);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+  const userRole = useSelector((state) => state.auth.user?.role || 'viewer');
 
-  return savedDrafts ? JSON.parse(savedDrafts) : [];
-});
-
-const [editingDraftId, setEditingDraftId] = useState(null);
-const [message, setMessage] = useState("");
-const [loading, setLoading] = useState(false);
-
-useEffect(() => {
-  localStorage.setItem("drafts", JSON.stringify(drafts));
-}, [drafts]);
+  useEffect(() => {
+    dispatch(loadDraftsFromLocalStorage());
+  }, [dispatch]);
 
   const limits = {
-  Twitter: 280,
-  Facebook: 63206,
-  LinkedIn: 3000,
-  Instagram: 2200,
-};
+    Twitter: 280,
+    Facebook: 63206,
+    LinkedIn: 3000,
+    Instagram: 2200,
+  };
 
-const imageRules = {
-  Twitter: {
-    character: 280,
-    required: false,
-    maxSize: 5 * 1024 * 1024,
-  },
+  const imageRules = {
+    Twitter: {
+      character: 280,
+      required: false,
+      maxSize: 5 * 1024 * 1024,
+    },
+    Facebook: {
+      required: false,
+      maxSize: 10 * 1024 * 1024,
+    },
+    LinkedIn: {
+      required: false,
+      maxSize: 5 * 1024 * 1024,
+    },
+    Instagram: {
+      required: true,
+      maxSize: 8 * 1024 * 1024,
+    },
+  };
 
-  Facebook: {
-    required: false,
-    maxSize: 10 * 1024 * 1024,
-  },
-
-  LinkedIn: {
-    required: false,
-    maxSize: 5 * 1024 * 1024,
-  },
-
-  Instagram: {
-    required: true,
-    maxSize: 8 * 1024 * 1024,
-  },
-};
-
-const handleSubmit = () => {
-  if (platforms.length === 0) {
-    alert("Please select at least one platform.");
-    return;
-  }
-
-  if (post.trim() === "") {
-    alert("Post cannot be empty.");
-    return;
-  }
-
-  const invalidPlatform = platforms.find(
-    (platform) => post.length > limits[platform]
-  );
-
-  if (invalidPlatform) {
-    alert(`${invalidPlatform} character limit exceeded.`);
-    return;
-  }
-
-  alert("Post submitted successfully!");
-};
-const saveDraft = () => {
-  if (post.trim() === "") {
-    setMessage("Cannot save an empty draft.");
-    return;
-  }
-
-  setLoading(true);
-  setMessage("");
-
-  setTimeout(() => {
-    if (editingDraftId !== null) {
-      setDrafts(
-        drafts.map((draft) =>
-          draft.id === editingDraftId
-            ? {
-                ...draft,
-                post: post,
-                platforms: platforms,
-                image: image,
-              }
-            : draft
-        )
-      );
-
-      setEditingDraftId(null);
-      setMessage("Draft updated successfully!");
-    } else {
-      const newDraft = {
-        id: Date.now(),
-        post: post,
-        platforms: platforms,
-        image: image,
-      };
-
-      setDrafts([...drafts, newDraft]);
-      setMessage("Draft saved successfully!");
+  const handleSubmit = () => {
+    if (!isAuthenticated) {
+      alert("Please login before submitting the post.");
+      return;
     }
 
-    setLoading(false);
-  }, 500);
-};
-const editDraft = (draft) => {
-  setPost(draft.post);
-  setPlatforms(draft.platforms);
-  setImage(draft.image);
+    if (platforms.length === 0) {
+      alert("Please select at least one platform.");
+      return;
+    }
 
-  setEditingDraftId(draft.id);
+    if (post.trim() === "") {
+      alert("Post cannot be empty.");
+      return;
+    }
 
-  setMessage("Draft loaded for editing.");
-};
-const deleteDraft = (id) => {
-  setDrafts(drafts.filter((draft) => draft.id !== id));
+    const invalidPlatform = platforms.find((platform) => post.length > limits[platform]);
 
-  setMessage("Draft deleted successfully!");
-};
+    if (invalidPlatform) {
+      alert(`${invalidPlatform} character limit exceeded.`);
+      return;
+    }
+
+    alert("Post submitted successfully!");
+  };
+
+  const handleSaveDraft = () => {
+    if (!isAuthenticated) {
+      alert("Please login before saving a draft.");
+      return;
+    }
+
+    if (post.trim() === "") {
+      dispatch(setMessage("Cannot save an empty draft."));
+      return;
+    }
+
+    dispatch(setLoading(true));
+    dispatch(setMessage(""));
+
+    setTimeout(() => {
+      dispatch(saveDraft());
+      dispatch(setLoading(false));
+    }, 500);
+  };
+
+  const handleEditDraft = (draft) => {
+    dispatch(startEditingDraft(draft));
+  };
+
+  const handleDeleteDraft = (id) => {
+    dispatch(deleteDraft(id));
+  };
+
   return (
     <div className="container">
       <h1>Social Media Post Composer</h1>
 
- 
-<p>    <PlatformSelector
-  platforms={platforms}
-  setPlatforms={setPlatforms}
-/>
-  Selected Platforms: {platforms.join(", ")}
-</p>
-     <PostInput post={post} setPost={setPost} />
+      <LoginForm />
 
-<ImageUploader
-    image={image}
-    setImage={setImage}
-    platforms={platforms}
-    imageRules={imageRules}
-/>
-<CharacterCounter post={post} />
+      {isAuthenticated && (
+        <>
+          <RoleDashboard />
 
-      <ValidationMessage
-  post={post}
-  platforms={platforms}
-  limits={limits}
-/>
-    <button onClick={saveDraft} disabled={loading}>
-  {loading
-    ? "Saving..."
-    : editingDraftId !== null
-    ? "Update Draft"
-    : "Save Draft"}
-</button>
-    <button onClick={handleSubmit}>Submit</button>
-    {message && (
-  <p className="feedback-message">
-    {message}
-  </p>
-)}
-    <DraftList
-  drafts={drafts}
-  onEdit={editDraft}
-  onDelete={deleteDraft}
-/>
+          {canAccessRoute(userRole, 'editor') && (
+            <>
+              <p>
+                <PlatformSelector
+                  platforms={platforms}
+                  setPlatforms={(platform) => dispatch(togglePlatform(platform))}
+                />
+                Selected Platforms: {platforms.join(", ") || "None"}
+              </p>
 
-</div>
+              <PostInput post={post} setPost={(value) => dispatch(updatePost(value))} />
+
+              <ImageUploader
+                image={image}
+                setImage={(nextImage) => dispatch(setImage(nextImage))}
+                platforms={platforms}
+                imageRules={imageRules}
+              />
+
+              <CharacterCounter post={post} />
+
+              <ValidationMessage post={post} platforms={platforms} limits={limits} />
+
+              {hasPermission(userRole, 'create_post') && (
+                <button onClick={handleSaveDraft} disabled={loading}>
+                  {loading ? "Saving..." : editingDraftId !== null ? "Update Draft" : "Save Draft"}
+                </button>
+              )}
+
+              {hasPermission(userRole, 'edit_post') && (
+                <button onClick={handleSubmit}>Submit</button>
+              )}
+
+              {message && <p className="feedback-message">{message}</p>}
+
+              {hasPermission(userRole, 'view_dashboard') && (
+                <>
+                  <CalendarScheduler />
+                  <DraftList drafts={drafts} onEdit={handleEditDraft} onDelete={handleDeleteDraft} />
+                </>
+              )}
+            </>
+          )}
+
+          {!canAccessRoute(userRole, 'editor') && (
+            <p className="error">Access denied: editor permissions required.</p>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 

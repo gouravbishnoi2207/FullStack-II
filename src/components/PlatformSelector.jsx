@@ -1,14 +1,6 @@
 function PlatformSelector({ platforms, setPlatforms }) {
   const handleCheckbox = (event) => {
-    const platform = event.target.value;
-
-    if (event.target.checked) {
-      setPlatforms([...platforms, platform]);
-    } else {
-      setPlatforms(
-        platforms.filter((item) => item !== platform)
-      );
-    }
+    setPlatforms(event.target.value);
   };
 
   return (
@@ -19,6 +11,7 @@ function PlatformSelector({ platforms, setPlatforms }) {
         <input
           type="checkbox"
           value="Twitter"
+          checked={platforms.includes("Twitter")}
           onChange={handleCheckbox}
         />
         Twitter
@@ -30,6 +23,7 @@ function PlatformSelector({ platforms, setPlatforms }) {
         <input
           type="checkbox"
           value="Facebook"
+          checked={platforms.includes("Facebook")}
           onChange={handleCheckbox}
         />
         Facebook
@@ -41,6 +35,7 @@ function PlatformSelector({ platforms, setPlatforms }) {
         <input
           type="checkbox"
           value="LinkedIn"
+          checked={platforms.includes("LinkedIn")}
           onChange={handleCheckbox}
         />
         LinkedIn
@@ -52,6 +47,7 @@ function PlatformSelector({ platforms, setPlatforms }) {
         <input
           type="checkbox"
           value="Instagram"
+          checked={platforms.includes("Instagram")}
           onChange={handleCheckbox}
         />
         Instagram

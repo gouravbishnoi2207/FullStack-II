@@ -91,3 +91,104 @@ button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+.auth-card {
+    background: #f8fafc;
+    border: 1px solid #dfe7ee;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.auth-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.auth-card input {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    box-sizing: border-box;
+    margin-top: 5px;
+}
+
+.auth-card label {
+    font-weight: bold;
+}
+
+.calendar-card {
+    background: #f8fafc;
+    border: 1px solid #dfe7ee;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.calendar-header {
+    text-align: center;
+    font-weight: bold;
+    background: #e8f0ff;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.calendar-day {
+    min-height: 90px;
+    padding: 8px;
+    text-align: left;
+    background: white;
+    border: 1px solid #dfe7ee;
+    border-radius: 6px;
+    width: 100%;
+    margin: 0;
+    color: #1f2937;
+}
+
+.calendar-day.selected {
+    border: 2px solid #2563eb;
+    background: #eff6ff;
+}
+
+.calendar-date {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.calendar-events {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.calendar-event {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.calendar-details {
+    margin-top: 20px;
+}
+
+.schedule-item {
+    background: white;
+    border: 1px solid #dfe7ee;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
